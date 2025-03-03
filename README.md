@@ -91,5 +91,164 @@ LIMIT 10;
 | **Ibico Hi-Tech Manual Binding System** | 23,080.57 |
 | **Sanyo 2.5 Cubic Foot Mid-Size Office Refrigerator** | 23,076.41 |
 
+## 📌 Total Sales & Profit by Category  
+This query calculates the total sales and total profit for each product category, helping in understanding revenue and profitability distribution.  
+### 📜 SQL Query  
+
+```sql
+SELECT PRODUCT_CATEGORY, SUM(Sales) AS TOTAL_SALES, SUM(Profit) AS TOTAL_PROFIT
+FROM SUPERSTORE_SALES_DATA
+GROUP BY PRODUCT_CATEGORY
+ORDER BY TOTAL_SALES DESC;
+```
+### Output
+| **Product Category** | **Total Sales ($)** | **Total Profit ($)** |
+|----------------------|--------------------|--------------------|
+| **Technology** | 3,507,113.42 | 688,056.59 |
+| **Furniture** | 2,997,619.10 | 1,216,151.00 |
+| **Office Supplies** | 2,193,243.65 | 440,488.39 |
+
+## Customer Segmentation Based on Orders
+```sql
+SELECT CUSTOMER_NAME, 
+       COUNT(Order_ID) AS TOTAL_ORDERS, 
+       SUM(Sales) AS TOTAL_SALES
+FROM SUPERSTORE_SALES_DATA
+GROUP BY CUSTOMER_NAME
+ORDER BY TOTAL_SALES DESC
+LIMIT 10;
+```
+### Output 
+| **Customer Name** | **Total Orders** | **Total Sales ($)** |
+|------------------|---------------|--------------------|
+| **Gordon Brandt** | 16 | 123,745.62 |
+| **Glen Caldwell** | 21 | 89,269.70 |
+| **Rosemary O’Brien** | 13 | 86,540.75 |
+| **Leigh Burnette Hurley** | 22 | 83,651.70 |
+| **Kristine Connolly** | 16 | 81,296.39 |
+| **Nina Horne Kelly** | 8 | 78,243.60 |
+| **Neal Wolfe** | 16 | 69,118.00 |
+| **Priscilla Kane** | 9 | 61,610.60 |
+| **Dana Teague** | 10 | 61,298.98 |
+| **Amanda Kay** | 7 | 55,793.40 |
+
+# RFM SEGMENTATION
+```sql
+SELECT CUSTOMER_NAME,
+       DATEDIFF(
+           (SELECT MAX(ORDER_DATE) FROM SUPERSTORE_SALES_DATA), 
+           MAX(ORDER_DATE)
+       ) AS RECENCY_VALUE,
+       COUNT(DISTINCT ORDER_ID) AS FREQUENCY_VALUE,
+       ROUND(SUM(SALES), 0) AS MONETARY_VALUE
+FROM SUPERSTORE_SALES_DATA
+GROUP BY CUSTOMER_NAME;
+```
+| **Customer Name** | **Recency Value** | **Frequency Value** | **Monetary Value ($)** |
+|------------------|----------------|----------------|--------------------|
+| **Aaron Davies Bruce** | 698 | 1 | 2,390 |
+| **Aaron Day** | 130 | 2 | 1,833 |
+| **Aaron Dillon** | 207 | 3 | 2,396 |
+| **Aaron Fuller Davidson** | 885 | 1 | 2,084 |
+| **Aaron Riggs** | 316 | 3 | 3,582 |
+| **Aaron Shaffer** | 500 | 3 | 2,400 |
+| **Adam Barton** | 134 | 3 | 2,393 |
+| **Adam G Sawyer** | 257 | 5 | 3,307 |
+| **Adam McKinney** | 477 | 1 | 3,813 |
+| **Adam Saunders Gray** | 312 | 2 | 3,538 |
+| **Others ...................|
+
+```sql
+CREATE OR REPLACE VIEW RFM_SCORE_DATA AS 
+WITH RFM_SEGMENTATION AS
+(SELECT CUSTOMER_NAME,
+    datediff(
+    (SELECT MAX(ORDER_DATE) FROM SUPERSTORE_SALES_DATA), MAX(ORDER_DATE)) AS RECENCY_VALUE,
+    COUNT(DISTINCT ORDER_ID) AS FREQUENCY_VALUE, 
+    ROUND(SUM(SALES),0) AS MONETARY_VALUE
+FROM SUPERSTORE_SALES_DATA
+GROUP BY CUSTOMER_NAME), 
+RFM_SCORE AS 
+(SELECT
+	RFM.*,
+    NTILE(4) OVER (ORDER BY RECENCY_VALUE DESC) AS R_SCORE,
+    NTILE(4) OVER (ORDER BY FREQUENCY_VALUE ASC) AS F_SCORE,
+	NTILE(4) OVER (ORDER BY MONETARY_VALUE ASC) AS M_SCORE
+	FROM RFM_SEGMENTATION AS RFM)
+
+SELECT 
+	R.CUSTOMER_NAME,
+    R.RECENCY_VALUE,
+    R_SCORE,
+    R.FREQUENCY_VALUE,
+    F_SCORE,
+    R.MONETARY_VALUE,
+    M_SCORE,
+    (R_SCORE + F_SCORE + M_SCORE) AS TOTAL_RFM_SCORE, 
+    CONCAT_WS('', R_SCORE, F_SCORE, M_SCORE) AS RFM_SCORE_COMBINATION 
+    
+    FROM RFM_SCORE AS R ;
+```
+then add also score 
+
+```sql
+CREATE VIEW RFM_ANALYSIS AS 
+SELECT 
+    RFM_SCORE_DATA.*,
+    CASE
+        WHEN RFM_SCORE_COMBINATION IN (111, 112, 121, 132, 211, 211, 212, 114, 141) THEN 'CHURNED CUSTOMER'
+        WHEN RFM_SCORE_COMBINATION IN (133, 134, 143, 224, 334, 343, 344, 144) THEN 'SLIPPING AWAY, CANNOT LOSE'
+        WHEN RFM_SCORE_COMBINATION IN (311, 411, 331) THEN 'NEW CUSTOMERS'
+        WHEN RFM_SCORE_COMBINATION IN (222, 231, 221,  223, 233, 322) THEN 'POTENTIAL CHURNERS'
+        WHEN RFM_SCORE_COMBINATION IN (323, 333,321, 341, 422, 332, 432) THEN 'ACTIVE'
+        WHEN RFM_SCORE_COMBINATION IN (433, 434, 443, 444) THEN 'LOYAL'
+    ELSE 'Other'
+    END AS CUSTOMER_SEGMENT
+FROM RFM_SCORE_DATA;
+```
+## Output:
+| **Customer Name** | **Recency Value** | **R Score** | **Frequency Value** | **F Score** | **Monetary Value ($)** | **M Score** | **Total RFM Score** | **RFM Score Combination** | **Customer Segment** |
+|------------------|----------------|----------|----------------|----------|--------------------|----------|----------------|----------------------|--------------------|
+| **Christina Matthews** | 1358 | 1 | 1 | 1 | 3 | 1 | 3 | 111 | CHURNED CUSTOMER |
+| **Harry Houston** | 509 | 2 | 1 | 1 | 3 | 1 | 4 | 211 | CHURNED CUSTOMER |
+| **Melvin Hsu** | 320 | 2 | 2 | 2 | 3 | 1 | 5 | 221 | POTENTIAL CHURNERS |
+| **Gretchen Zimmerman** | 82 | 4 | 1 | 1 | 4 | 2 | 7 | 421 | Other |
+| **Angela Wooten** | 675 | 1 | 1 | 1 | 4 | 1 | 3 | 111 | CHURNED CUSTOMER |
+| **Cameron Page** | 495 | 2 | 1 | 1 | 4 | 2 | 4 | 211 | CHURNED CUSTOMER |
+| **Katie Oh** | 358 | 2 | 2 | 2 | 5 | 1 | 5 | 221 | POTENTIAL CHURNERS |
+| **Samuel Smith Ryan** | 670 | 1 | 1 | 1 | 5 | 1 | 4 | 111 | CHURNED CUSTOMER |
+| **Fred H Proctor** | 645 | 2 | 1 | 1 | 5 | 1 | 4 | 211 | CHURNED CUSTOMER |
+| **Frances Grant** | 266 | 3 | 2 | 2 | 3 | 1 | 6 | 321 | ACTIVE |
+| **Dwight Banks** | 1055 | 1 | 1 | 1 | 6 | 1 | 3 | 111 | CHURNED CUSTOMER |
+| **Mary Knowles** | 871 | 1 | 1 | 1 | 6 | 1 | 3 | 111 | CHURNED CUSTOMER |
+| **Ricky Hansen** | 676 | 1 | 1 | 1 | 6 | 1 | 3 | 111 | CHURNED CUSTOMER |
+| **Beth Brennan** | 663 | 1 | 1 | 1 | 6 | 1 | 3 | 111 | CHURNED CUSTOMER |
+| **Janice Fletcher** | 582 | 2 | 1 | 1 | 6 | 1 | 4 | 211 | CHURNED CUSTOMER |
+| **Gary Kaufman** | 212 | 3 | 2 | 2 | 6 | 1 | 6 | 321 | ACTIVE |
+| **Deborah Bradshaw** | 761 | 1 | 1 | 1 | 6 | 1 | 3 | 111 | CHURNED CUSTOMER |
+| **Maxine Fletcher** | 529 | 2 | 1 | 1 | 6 | 1 | 4 | 211 | CHURNED CUSTOMER |
+| **Lester Sykes** | 269 | 3 | 2 | 2 | 3 | 1 | 6 | 321 | ACTIVE |
+| **Phillip Cochran Ashley** | 196 | 3 | 3 | 2 | 7 | 1 | 6 | 321 | ACTIVE |
+
+# Total number of different categories customer
+```sql
+SELECT 
+	CUSTOMER_SEGMENT, 
+    COUNT(*) AS NUMBER_OF_CUSTOMERS,
+   ROUND(AVG(MONETARY_VALUE),0) AS AVERAGE_MONETARY_VALUE
+FROM RFM_ANALYSIS 
+GROUP BY CUSTOMER_SEGMENT; 
+```
+## Output:
+| **Customer Segment**               | **Number of Customers** | **Average Monetary Value ($)** |
+|------------------------------------|------------------------|----------------------------|
+| **CHURNED CUSTOMER**               | 613                    | 496                        |
+| **POTENTIAL CHURNERS**             | 328                    | 1020                       |
+| **Other**                          | 562                    | 3119                       |
+| **ACTIVE**                         | 384                    | 947                        |
+| **NEW CUSTOMERS**                  | 20                     | 180                        |
+| **LOYAL**                          | 424                    | 8430                       |
+| **SLIPPING AWAY, CANNOT LOSE**      | 337                    | 7016                       |
+
 
 
