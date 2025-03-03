@@ -47,6 +47,14 @@ The customer segmentation analysis was conducted using **RFM (Recency, Frequency
 
 # EDA Analysis 
 ## Top 10 products:
+### SQL Query
+```SELECT PRODUCT_NAME,
+SUM(SALES) AS TOTAL_SALES
+FROM SUPERSTORE_SALES_DATA
+GROUP BY PRODUCT_NAME
+ORDER BY TOTAL_SALES DESC
+LIMIT 10;
+```
 
 | **Product Name** | **Total Sales ($)** |
 |------------------|--------------------|
@@ -250,5 +258,12 @@ GROUP BY CUSTOMER_SEGMENT;
 | **LOYAL**                          | 424                    | 8430                       |
 | **SLIPPING AWAY, CANNOT LOSE**      | 337                    | 7016                       |
 
-
+## Customer Segment Insights
+- Churned Customers (613, $496) – Largest segment with low spending. Requires re-engagement strategies.
+- Potential Churners (328, $1020) – At risk of leaving. Needs proactive retention efforts.
+- Other (562, $3119) – Transitional customers with moderate spending. Potential for engagement.
+- Active (384, $947) – Engaged but lower spenders. Needs nurturing.
+- New Customers (20, $180) – Smallest segment with low spending. Focus on onboarding.
+- Loyal Customers (424, $8430) – Highest revenue contributors. Must be retained and rewarded.
+- Slipping Away (337, $7016) – High-value customers at risk. Critical for retention efforts.
 
