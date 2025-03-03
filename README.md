@@ -48,7 +48,8 @@ The customer segmentation analysis was conducted using **RFM (Recency, Frequency
 # EDA Analysis 
 ## Top 10 products:
 ### SQL Query
-```SELECT PRODUCT_NAME,
+```sql
+SELECT PRODUCT_NAME,
 SUM(SALES) AS TOTAL_SALES
 FROM SUPERSTORE_SALES_DATA
 GROUP BY PRODUCT_NAME
