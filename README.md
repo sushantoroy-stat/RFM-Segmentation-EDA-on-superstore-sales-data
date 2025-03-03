@@ -45,7 +45,8 @@ The customer segmentation analysis was conducted using **RFM (Recency, Frequency
   - 🔄 **Re-engagement strategies** for potential churners.  
   - 📢 **Acquisition strategies** for new customers.  
 
-
+# EDA Analysis 
+## Top 10 products:
 
 | **Product Name** | **Total Sales ($)** |
 |------------------|--------------------|
@@ -59,3 +60,36 @@ The customer segmentation analysis was conducted using **RFM (Recency, Frequency
 | **Polycom ViewStation™ ISDN Videoconferencing ...** | 92,916.02 |
 | **Chromcraft Bull-Nose Wood 48" x 96" Rectang...** | 92,208.46 |
 | **Sharp AL-1530CS Digital Copier** | 86,057.24 |
+
+
+
+## Top 10 Most Profitable Products  
+
+This SQL query retrieves the top 10 most profitable products from the `SUPERSTORE_SALES_DATA` table.  
+
+### SQL Query  
+
+```sql
+SELECT Product_Name, SUM(Profit) AS Total_profit
+FROM SUPERSTORE_SALES_DATA
+GROUP BY Product_Name
+ORDER BY Total_profit DESC
+LIMIT 10; 
+```
+### Output  
+
+| **Product Name** | **Total Profit ($)** |
+|------------------|--------------------|
+| **Global Troy™ Executive Leather Low-Back Tilter** | 79,509.39 |
+| **Fellowes PB500 Electric Punch Plastic Comb Binder** | 35,909.53 |
+| **GBC DocuBind 200 Manual Binding Machine** | 33,892.33 |
+| **Hewlett-Packard cp1700 [D, PS] Series Color Inkjet Printer** | 33,721.10 |
+| **Hewlett-Packard LaserJet 3310 Copier** | 33,712.30 |
+| **Canon PC940 Copier** | 28,307.56 |
+| **GBC DocuBind TL300 Electric Binding System** | 25,033.90 |
+| **Hewlett-Packard Deskjet 1220Cse Color Inkjet Printer** | 24,782.75 |
+| **Ibico Hi-Tech Manual Binding System** | 23,080.57 |
+| **Sanyo 2.5 Cubic Foot Mid-Size Office Refrigerator** | 23,076.41 |
+
+
+
